@@ -13,6 +13,11 @@ const pool = require('./config/db');
 const redisClient = require('./config/redis');
 
 // TODO: Import routes here as modules are completed
+const superAdminRoutes = require('./modules/super-admin/routes');
+const saccoAdminRoutes = require('./modules/sacco-admin/routes');
+const driverRoutes = require('./modules/drivers/routes');
+const passengerRoutes = require('./modules/passengers/routes');
+const authRoutes = require('./auth/login/routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -43,6 +48,11 @@ app.get('/health', (req, res) => {
 });
 
 // TODO: Mount routes here as modules are completed
+app.use('/v1/super-admins', superAdminRoutes);
+app.use('/v1/sacco-admins', saccoAdminRoutes);
+app.use('/v1/drivers', driverRoutes);
+app.use('/v1/passengers', passengerRoutes);
+app.use('/v1/auth', authRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3000;
