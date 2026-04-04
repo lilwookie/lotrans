@@ -1,4 +1,5 @@
 const { hashPassword } = require('../../utils/bcrypt.util');
+const { getIO } = require('../../websocket/socket');
 const {
     createDriver,
     getAllDrivers,
@@ -22,7 +23,6 @@ const handleCreate = async (req, res) => {
             return res.status(409).json({ message: 'Email already in use' });
         }
 
-        // check phone number
         if (phone_number) {
             const existingPhone = await getDriverByPhone(phone_number);
             if (existingPhone) {
@@ -38,6 +38,9 @@ const handleCreate = async (req, res) => {
             role: 'driver',
             created_by,
         });
+
+        getIO().to('admin:dashboard').emit('driver:created', { driver });
+        console.log(`[EMIT] driver:created → ${driver.full_name}`);
 
         res.status(201).json({ message: 'Driver created', data: driver });
     } catch (err) {
@@ -87,6 +90,9 @@ const handleUpdate = async (req, res) => {
             return res.status(404).json({ message: 'No driver with such ID found' });
         }
 
+        getIO().to('admin:dashboard').emit('driver:updated', { driver: updated });
+        console.log(`[EMIT] driver:updated → ${updated.full_name}`);
+
         res.status(200).json({ message: 'Driver updated', data: updated });
     } catch (err) {
         console.error(err);
@@ -105,6 +111,9 @@ const handleDelete = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: 'No driver with such ID found' });
         }
+
+        getIO().to('admin:dashboard').emit('driver:deleted', { driver_id: id });
+        console.log(`[EMIT] driver:deleted → ${id}`);
 
         res.status(200).json({ message: 'Driver deleted', data: deleted });
     } catch (err) {

@@ -1,4 +1,5 @@
 const { hashPassword } = require('../../utils/bcrypt.util');
+const { getIO } = require('../../websocket/socket');
 const {
     createPassenger,
     getAllPassengers,
@@ -22,7 +23,6 @@ const handleCreate = async (req, res) => {
             return res.status(409).json({ message: 'Email already in use' });
         }
 
-        // check phone number
         if (phone_number) {
             const existingPhone = await getPassengerByPhone(phone_number);
             if (existingPhone) {
@@ -38,6 +38,9 @@ const handleCreate = async (req, res) => {
             role: 'passenger',
             created_by,
         });
+
+        getIO().to('admin:dashboard').emit('passenger:created', { passenger });
+        console.log(`[EMIT] passenger:created → ${passenger.full_name}`);
 
         res.status(201).json({ message: 'Passenger created', data: passenger });
     } catch (err) {
@@ -87,6 +90,9 @@ const handleUpdate = async (req, res) => {
             return res.status(404).json({ message: 'No passenger with such ID found' });
         }
 
+        getIO().to('admin:dashboard').emit('passenger:updated', { passenger: updated });
+        console.log(`[EMIT] passenger:updated → ${updated.full_name}`);
+
         res.status(200).json({ message: 'Passenger updated', data: updated });
     } catch (err) {
         console.error(err);
@@ -105,6 +111,9 @@ const handleDelete = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: 'No passenger with such ID found' });
         }
+
+        getIO().to('admin:dashboard').emit('passenger:deleted', { passenger_id: id });
+        console.log(`[EMIT] passenger:deleted → ${id}`);
 
         res.status(200).json({ message: 'Passenger deleted', data: deleted });
     } catch (err) {
