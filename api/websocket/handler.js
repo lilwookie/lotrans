@@ -1,3 +1,4 @@
+const { getIO } = require('./socket');
 const jwt = require('jsonwebtoken');
 const { findNearestStop } = require('../utils/haversine');
 const {
@@ -5,6 +6,7 @@ const {
   getDriverVehicle,
   getBookingsAtStop,
   getActiveBookingsForVehicle,
+  updateTripStatus
 } = require('./model');
 
 const vehicleCache = {};
@@ -156,7 +158,26 @@ function initializeWebSocket(io, redisClient) {
           if (crossedStop) {
             console.log(`[WS] ${state.plate_number} crossed → ${nearestStop.name}`);
 
-            const { pickups, dropoffs } = await getBookingsAtStop(vehicle_id, nearestStop.id);
+            const { pickups, dropoffs } = await getBookingsAtStop(vehicle_id, nearestStop.id, state.direction);
+
+              // Update trip statuses and notify passengers and drivers in real-time
+                for (const p of pickups) {
+                await updateTripStatus(p.id, 'onboard');
+                getIO().to(`passenger:${p.passenger_id}`).emit('trip:status', {
+                  status: 'onboard',
+                  message: 'Your vehicle has arrived at your stop. Board now!',
+                  booking_id: p.id,
+                });
+              }
+
+              for (const d of dropoffs) {
+                await updateTripStatus(d.id, 'completed');
+                getIO().to(`passenger:${d.passenger_id}`).emit('trip:status', {
+                  status: 'completed',
+                  message: 'You have reached your destination. Safe travels!',
+                  booking_id: d.id,
+                });
+              }
 
             // Driver only — has personal details
             socket.emit('stop:crossed', {

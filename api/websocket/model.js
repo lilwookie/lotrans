@@ -35,17 +35,21 @@ async function getDriverVehicle(driver_id) {
 }
 
 // Get active bookings at a specific stop for a vehicle
-async function getBookingsAtStop(vehicle_id, stop_id) {
+async function getBookingsAtStop(vehicle_id, stop_id, direction) {
+  console.log('[STOP CHECK]', { vehicle_id, stop_id, direction });
+
   const pickups = await pool.query(
     `SELECT b.id, b.passenger_id, b.drop_off_stop_id, b.notification_preference,
             u.full_name, u.phone_number
      FROM bookings b
      JOIN users u ON u.id = b.passenger_id
      WHERE b.vehicle_id = $1 
-       AND b.pickup_stop_id = $2 
-       AND b.status = 'confirmed'`,
-    [vehicle_id, stop_id]
+       AND b.pickup_stop_id = $2
+       AND b.direction = $3
+       AND b.trip_status = 'awaiting'`,
+    [vehicle_id, stop_id, direction]
   );
+  console.log('[PICKUPS FOUND]', pickups.rows.length);
 
   const dropoffs = await pool.query(
     `SELECT b.id, b.passenger_id, b.pickup_stop_id, b.notification_preference,
@@ -53,15 +57,21 @@ async function getBookingsAtStop(vehicle_id, stop_id) {
      FROM bookings b
      JOIN users u ON u.id = b.passenger_id
      WHERE b.vehicle_id = $1 
-       AND b.drop_off_stop_id = $2 
-       AND b.status = 'confirmed'`,
-    [vehicle_id, stop_id]
+       AND b.drop_off_stop_id = $2
+       AND b.direction = $3
+       AND b.trip_status = 'onboard'`,
+    [vehicle_id, stop_id, direction]
   );
+  console.log('[DROPOFFS FOUND]', dropoffs.rows.length);
 
-  return {
-    pickups: pickups.rows,
-    dropoffs: dropoffs.rows,
-  };
+  return { pickups: pickups.rows, dropoffs: dropoffs.rows };
+}
+
+async function updateTripStatus(booking_id, status) {
+  await pool.query(
+    `UPDATE bookings SET trip_status = $1 WHERE id = $2`,
+    [status, booking_id]
+  );
 }
 
 // Get all confirmed bookings for a vehicle (for passenger notifications)
@@ -81,4 +91,5 @@ module.exports = {
   getDriverVehicle,
   getBookingsAtStop,
   getActiveBookingsForVehicle,
+  updateTripStatus
 };

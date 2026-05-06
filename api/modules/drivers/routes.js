@@ -1,4 +1,5 @@
 const express = require('express');
+const authenticateJWT = require('../../middleware/authenticateJWT');
 const router = express.Router();
 const {
     handleCreate,
@@ -8,7 +9,12 @@ const {
     handleDelete,
 } = require('./controller');
 
+
+
 router.post('/signup', handleCreate);
+
+router.use(authenticateJWT);
+
 router.get('/getall', handleGetAll);
 router.get('/getById/:id', handleGetById);
 router.put('/update/:id', handleUpdate);

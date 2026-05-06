@@ -21,7 +21,9 @@ const driverRoutes = require('./modules/drivers/routes');
 const passengerRoutes = require('./modules/passengers/routes');
 const authRoutes = require('./auth/login/routes');
 const vehicleRoutes = require('./modules/vehicles/routes');
-const VehicleRouteRoutes = require('./modules/routes/routes');
+const vehicleRouteRoutes = require('./modules/routes/routes');
+const bookingRoutes = require('./modules/bookings/routes');
+const mpesaRoutes = require('./mpesa/modules/routes');
    
 
 const app = express();
@@ -51,7 +53,9 @@ app.use('/v1/drivers', driverRoutes);
 app.use('/v1/passengers', passengerRoutes);
 app.use('/v1/auth', authRoutes);
 app.use('/v1/vehicles', vehicleRoutes);
-app.use('/v1/routes', VehicleRouteRoutes);
+app.use('/v1/routes', vehicleRouteRoutes);
+app.use('/v1/payment', mpesaRoutes);    
+app.use('/v1/bookings', bookingRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3000;

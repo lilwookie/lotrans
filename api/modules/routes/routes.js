@@ -18,7 +18,7 @@ const {
 } = require('./controller');
 
 router.use(authenticateJWT);
-router.use(requireRole('admin'));
+router.use(requireRole('admin', 'super_admin','driver')); 
 
 // Routes
 router.post('/add', addRoute);
